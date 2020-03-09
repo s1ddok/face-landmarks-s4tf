@@ -17,8 +17,8 @@ let trainDatasetB = try Images(folder: trainFolderB)
 
 var generatorG = NetG(inputChannels: 3, outputChannels: 3, ngf: 64, normalization: InstanceNorm2D.self, useDropout: false)
 var generatorF = NetG(inputChannels: 3, outputChannels: 3, ngf: 64, normalization: InstanceNorm2D.self, useDropout: false)
-var discriminatorX = NetD(inChannels: 6, lastConvFilters: 64)
-var discriminatorY = NetD(inChannels: 6, lastConvFilters: 64)
+var discriminatorX = NetD(inChannels: 3, lastConvFilters: 64)
+var discriminatorY = NetD(inChannels: 3, lastConvFilters: 64)
 
 let optimizerGF = Adam(for: generatorG, learningRate: 0.0002, beta1: 0.5)
 let optimizerGG = Adam(for: generatorF, learningRate: 0.0002, beta1: 0.5)

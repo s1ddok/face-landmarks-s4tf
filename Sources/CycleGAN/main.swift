@@ -62,75 +62,82 @@ for epoch in 0..<epochs {
                 croppedImages = _Raw.reverse(croppedImages, dims: [false, false, true, false])
             }
         
-            let sourceImages = croppedImages[0].expandingShape(at: 0)
-            let targetImages = croppedImages[1].expandingShape(at: 0)
+            let realX = croppedImages[0].expandingShape(at: 0)
+            let realY = croppedImages[1].expandingShape(at: 0)
             
-            let (fakeY, fakeYBackprop) = generatorG.appliedForBackpropagation(to: realX)
-            let (cycledX, cycledXBackprop) = generatorF.appliedForBackpropagation(to: fakeY)
+            let ones = Tensorf.one.broadcasted(to: [1, 30, 30, 1])
+            let zeros = Tensorf.one.broadcasted(to: [1, 30, 30, 1])
             
-            let (fakeX, fakeXBackprop) = generatorF.appliedForBackpropagation(to: realY)
-            let (cycledY, cycledYBackprop) = generatorG.appliedForBackpropagation(to: fakeX)
-            
-            // sameX and sameY are used for identity loss.
-            let (sameX, sameXBackprop) = generatorF.appliedForBackpropagation(to: realX)
-            let (sameY, sameYBackprop) = generatorG.appliedForBackpropagation(to: realY)
-            
-            let (discRealX, discRealXBackprop) = discriminatorX.appliedForBackpropagation(to: realX)
-            let (discRealY, discRealYBackprop) = discriminatorY.appliedForBackpropagation(to: realY)
-            
-            let (discFakeX, discFakeXBackprop) = discriminatorX.appliedForBackpropagation(to: fakeX)
-            let (discFakeY, discFakeYBackprop) = discriminatorY.appliedForBackpropagation(to: fakeY)
-            
-            let ones = Tensorf.one.broadcasted(like: discFakeY)
-            let (genGLoss, genGGradient) = TensorFlow.valueWithGradient(at: discFakeY) {
-                sigmoidCrossEntropy(logits: $0, labels: ones)
-            }
-            let (genFLoss, genFGradient) = TensorFlow.valueWithGradient(at: discFakeX) {
-                sigmoidCrossEntropy(logits: $0, labels: ones)
-            }
+            let 𝛁generatorG = TensorFlow.gradient(at: generatorG) { g -> Tensorf in
+                let fakeY = g(realX)
+                let cycledX = generatorF(fakeY)
+                
+                let cycleConsistencyLoss = abs(realX - cycledX).mean() * lambdaL1
 
-            let (cycleLossX, cycleLossXGradient) = TensorFlow.valueWithGradient(at: realX, cycledX) {
-                abs($0 - $1).mean() * lambdaL1
-            }
-            let (cycleLossY, cycleLossYGradient) = TensorFlow.valueWithGradient(at: realY, cycledY) {
-                abs($0 - $1).mean() * lambdaL1
-            }
-            
-            let (identityLossX, identityLossXGradient) = TensorFlow.valueWithGradient(at: realX, sameX) {
-                abs($0 - $1).mean() * lambdaL1 * 0.5
-            }
-            let (identityLossY, identityLossYGradient) = TensorFlow.valueWithGradient(at: realY, sameY) {
-                abs($0 - $1).mean() * lambdaL1 * 0.5
+                let discFakeY = discriminatorY(fakeY)
+                let generatorLoss = sigmoidCrossEntropy(logits: discFakeY, labels: ones)
+                
+                let sameY = g(realY)
+                let identityLoss = abs(sameY - realY).mean() * lambdaL1 * 0.5
+                
+                let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
+                ganGLossTotal += totalLoss
+                                                                    
+                return totalLoss
             }
             
-            let totalCycleLoss = cycleLossX + cycleLossY
-            let totalCycleLossGradient = cycleLossXGradient.0 + cycleLossYGradient.0 + cycleLossXGradient.1 + cycleLossYGradient.1
+            let 𝛁generatorF = TensorFlow.gradient(at: generatorF) { g -> Tensorf in
+                let fakeX = g(realY)
+                let cycledY = generatorG(fakeX)
+                
+                let cycleConsistencyLoss = abs(realY - cycledY).mean() * lambdaL1
+
+                let discFakeX = discriminatorX(fakeX)
+                let generatorLoss = sigmoidCrossEntropy(logits: discFakeX, labels: ones)
+                
+                let sameX = g(realX)
+                let identityLoss = abs(sameX - realX).mean() * lambdaL1 * 0.5
+                
+                return cycleConsistencyLoss + generatorLoss + identityLoss
+            }
             
-            let (𝛁generatorG, _) = fakeYBackprop(totalCycleLossGradient + genGGradient + identityLossYGradient.0 + identityLossYGradient.1)
+            let 𝛁discriminatorX = TensorFlow.gradient(at: discriminatorX) { d -> Tensorf in
+                let fakeX = generatorG(realX)
+                let discFakeX = d(fakeX)
+                let discRealX = d(realX)
+                
+                return 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zeros) + sigmoidCrossEntropy(logits: discRealX, labels: ones))
+            }
+            
+            let 𝛁discriminatorY = TensorFlow.gradient(at: discriminatorX) { d -> Tensorf in
+                let fakeY = generatorF(realY)
+                let discFakeY = d(fakeY)
+                let discRealY = d(realY)
+                
+                return 0.5 * (sigmoidCrossEntropy(logits: discFakeY, labels: zeros) + sigmoidCrossEntropy(logits: discRealY, labels: ones))
+            }
+            
             optimizerGG.update(&generatorG, along: 𝛁generatorG)
-            
-            let (𝛁generatorF, _) = fakeXBackprop(totalCycleLossGradient + genFGradient + identityLossXGradient.0 + identityLossXGradient.1)
             optimizerGF.update(&generatorF, along: 𝛁generatorF)
-            
-            ganGLossTotal += totalCycleLoss + identityLossY + genGLoss
-            ganGLossCount += 1
-            
-            let onesLikeDiscRealX = Tensorf.one.broadcasted(like: discRealX)
-            let zerosLikeDiscFakeX = Tensorf(0).broadcasted(like: discRealX)
-            let (discXLoss, discXLossGradient) = TensorFlow.valueWithGradient(at: discRealX, discFakeX) {
-                (sigmoidCrossEntropy(logits: $0, labels: onesLikeDiscRealX) + sigmoidCrossEntropy(logits: $1, labels: zerosLikeDiscFakeX)) * 0.5
-            }
-            
-            let (discYLoss, discYLossGradient) = TensorFlow.valueWithGradient(at: discRealY, discFakeY) {
-                (sigmoidCrossEntropy(logits: $0, labels: onesLikeDiscRealX) + sigmoidCrossEntropy(logits: $1, labels: zerosLikeDiscFakeX)) * 0.5
-            }
-            
-            let (𝛁discriminatorX, _) = discRealXBackprop(discXLossGradient.0 + discXLossGradient.1)
             optimizerDX.update(&discriminatorX, along: 𝛁discriminatorX)
-            let (𝛁discriminatorY, _) = discRealYBackprop(discYLossGradient.0 + discYLossGradient.1)
             optimizerDY.update(&discriminatorY, along: 𝛁discriminatorY)
+            
+            ganGLossCount += 1
         }
     }
     
     print("Gan G loss: \(ganGLossTotal / ganGLossCount)")
+    
+    for testBatch in trainDatasetA.dataset.batched(1) {
+        let result = generatorG(testBatch.image)
+        let images = result * 0.5 + 0.5
+        
+        let image = Image(tensor: images[0])
+        
+        let currentURL = Folder.current.url.appendingPathComponent("\(epoch).jpg")
+        
+        image.save(to: currentURL, format: .rgb)
+        
+        break
+    }
 }

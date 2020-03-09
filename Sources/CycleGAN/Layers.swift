@@ -180,16 +180,17 @@ public struct ConvLayer: Layer {
     }
 }
 
-public struct UNetSkipConnectionInnermost: Layer {
+public struct UNetSkipConnectionInnermost<NT: FeatureChannelInitializable>: Layer where NT.TangentVector.VectorSpaceScalar == Float, NT.Input == Tensorf, NT.Output == Tensorf {
     public var downRELU = LeakyRELU()
     public var downConv: Conv2D<Float>
     public var upConv: TransposedConv2D<Float>
     public var upRELU = RELU()
-    public var upNorm: BatchNorm<Float>
+    public var upNorm: NT
     
     public init(inChannels: Int,
                 innerChannels: Int,
-                outChannels: Int) {
+                outChannels: Int,
+                normalization: NT.Type) {
         self.downConv = .init(filterShape: (4, 4, inChannels, innerChannels),
                               strides: (2, 2),
                               padding: .same,
@@ -215,22 +216,23 @@ public struct UNetSkipConnectionInnermost: Layer {
 }
 
 
-public struct UNetSkipConnection<NT: Layer>: Layer where NT.TangentVector.VectorSpaceScalar == Float, NT.Input == Tensorf, NT.Output == Tensorf {
+public struct UNetSkipConnection<SMT: Layer, NT: FeatureChannelInitializable>: Layer where NT.TangentVector.VectorSpaceScalar == Float, NT.Input == Tensorf, NT.Output == Tensorf, SMT.TangentVector.VectorSpaceScalar == Float, SMT.Input == Tensorf, SMT.Output == Tensorf {
     public var downRELU = LeakyRELU()
     public var downConv: Conv2D<Float>
-    public var downNorm: BatchNorm<Float>
+    public var downNorm: NT
     public var upConv: TransposedConv2D<Float>
     public var upRELU = RELU()
-    public var upNorm: BatchNorm<Float>
+    public var upNorm: NT
     public var dropOut = Dropout<Float>(probability: 0.5)
     @noDerivative public var useDropOut: Bool
     
-    public var submodule: NT
+    public var submodule: SMT
     
     public init(inChannels: Int,
                 innerChannels: Int,
                 outChannels: Int,
-                submodule: NT,
+                submodule: SMT,
+                normalization: NT.Type,
                 useDropOut: Bool = false) {
         self.downConv = .init(filterShape: (4, 4, inChannels, innerChannels),
                               strides: (2, 2),

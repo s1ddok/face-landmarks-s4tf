@@ -30,7 +30,7 @@ let testFolder = try facadesFolder.subfolder(named: "test")
 let trainDataset = try Facades(folder: trainFolder)
 let testDataset = try Facades(folder: testFolder)
 
-var generator = NetG(inputChannels: 3, outputChannels: 3, ngf: 64, useDropout: false)
+var generator = NetG(inputChannels: 3, outputChannels: 3, ngf: 64, normalization: InstanceNorm2D.self, useDropout: false)
 var discriminator = NetD(inChannels: 6, lastConvFilters: 64)
 
 let optimizerG = Adam(for: generator, learningRate: 0.0002, beta1: 0.5)

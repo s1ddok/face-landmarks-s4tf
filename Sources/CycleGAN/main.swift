@@ -132,7 +132,7 @@ for epoch in 0..<epochs {
         let result = generatorG(testBatch.image)
         let images = result * 0.5 + 0.5
         
-        let image = Image(tensor: images[0])
+        let image = Image(tensor: images[0] * 255)
         
         let currentURL = Folder.current.url.appendingPathComponent("\(epoch).jpg")
         

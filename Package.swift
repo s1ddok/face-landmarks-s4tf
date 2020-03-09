@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "pix2pix",
+    name: "CycleGAN",
     dependencies: [
         .package(url: "https://github.com/JohnSundell/Files", from: "4.0.0"),
         .package(url: "https://github.com/t-ae/tensorboardx-s4tf.git", from: "0.1.1"),
@@ -12,7 +12,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "pix2pix",
+            name: "CycleGAN",
             dependencies: ["Files", "TensorBoardX", "ArgumentParser"]),
     ]
 )

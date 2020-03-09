@@ -109,7 +109,7 @@ for epoch in 0..<epochs {
                 return 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zeros) + sigmoidCrossEntropy(logits: discRealX, labels: ones))
             }
             
-            let 𝛁discriminatorY = TensorFlow.gradient(at: discriminatorX) { d -> Tensorf in
+            let 𝛁discriminatorY = TensorFlow.gradient(at: discriminatorY) { d -> Tensorf in
                 let fakeY = generatorF(realY)
                 let discFakeY = d(fakeY)
                 let discRealY = d(realY)

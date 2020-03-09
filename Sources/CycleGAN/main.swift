@@ -128,7 +128,7 @@ for epoch in 0..<epochs {
             let (𝛁discriminatorX, _) = discRealXBackprop(discXLossGradient.0 + discXLossGradient.1)
             optimizerDX.update(&discriminatorX, along: 𝛁discriminatorX)
             let (𝛁discriminatorY, _) = discRealYBackprop(discYLossGradient.0 + discYLossGradient.1)
-            optimizerDY.update(&discriminatorX, along: 𝛁discriminatorY)
+            optimizerDY.update(&discriminatorY, along: 𝛁discriminatorY)
         }
     }
     

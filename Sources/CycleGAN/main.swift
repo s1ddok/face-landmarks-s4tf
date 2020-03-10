@@ -20,15 +20,15 @@ var generatorF = NetG(inputChannels: 3, outputChannels: 3, ngf: 64, normalizatio
 var discriminatorX = NetD(inChannels: 3, lastConvFilters: 64)
 var discriminatorY = NetD(inChannels: 3, lastConvFilters: 64)
 
-let optimizerGF = Adam(for: generatorG, learningRate: 0.0002, beta1: 0.5)
-let optimizerGG = Adam(for: generatorF, learningRate: 0.0002, beta1: 0.5)
+let optimizerGF = Adam(for: generatorF, learningRate: 0.0002, beta1: 0.5)
+let optimizerGG = Adam(for: generatorG, learningRate: 0.0002, beta1: 0.5)
 let optimizerDX = Adam(for: discriminatorX, learningRate: 0.0002, beta1: 0.5)
 let optimizerDY = Adam(for: discriminatorY, learningRate: 0.0002, beta1: 0.5)
 
 let epochs = options.epochs
 let batchSize = 1
 let lambdaL1 = Tensorf(10)
-let zeros = Tensorf(0)
+let zeros = Tensorf.zero
 let ones = Tensorf.one
 let gpuIndex = options.gpuIndex
 

@@ -29,7 +29,7 @@ let epochs = options.epochs
 let batchSize = 1
 let lambdaL1 = Tensorf(100)
 let zeros = Tensorf(0)
-let ones = Tensorf(1)
+let ones = Tensorf.one
 let gpuIndex = options.gpuIndex
 
 for epoch in 0..<epochs {
@@ -65,8 +65,8 @@ for epoch in 0..<epochs {
             let realX = croppedImages[0].expandingShape(at: 0)
             let realY = croppedImages[1].expandingShape(at: 0)
             
-            let ones = Tensorf.one.broadcasted(to: [1, 30, 30, 1])
-            let zeros = Tensorf.one.broadcasted(to: [1, 30, 30, 1])
+            let onesd = ones.broadcasted(to: [1, 30, 30, 1])
+            let zerosd = zeros.broadcasted(to: [1, 30, 30, 1])
             
             let 𝛁generatorG = TensorFlow.gradient(at: generatorG) { g -> Tensorf in
                 let fakeY = g(realX)

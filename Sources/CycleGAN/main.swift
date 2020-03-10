@@ -149,7 +149,7 @@ for epoch in 0..<epochs {
                         "GeneratorG": generatorLossG.scalars[0],
                         "GeneratorF": generatorLossF.scalars[0],
                         "DiscriminatorX": discriminatorLossX.scalars[0],
-                        "DiscriminatorY": discriminatorLossX.scalars[0]
+                        "DiscriminatorY": discriminatorLossY.scalars[0]
                       ],
                       globalStep: epoch)
     

@@ -27,7 +27,7 @@ let optimizerDY = Adam(for: discriminatorY, learningRate: 0.0002, beta1: 0.5)
 
 let epochs = options.epochs
 let batchSize = 1
-let lambdaL1 = Tensorf(100)
+let lambdaL1 = Tensorf(10)
 let zeros = Tensorf(0)
 let ones = Tensorf.one
 let gpuIndex = options.gpuIndex

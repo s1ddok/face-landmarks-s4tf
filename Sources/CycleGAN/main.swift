@@ -7,7 +7,7 @@ let options = Options.parseOrExit()
 
 let logdir = URL(fileURLWithPath: options.tensorboardLogdir).appendingPathComponent(String(Int(Date().timeIntervalSince1970)))
 //try? FileManager.default.removeItem(at: logdir)
-//let writer = SummaryWriter(logdir: logdir)
+let writer = SummaryWriter(logdir: logdir)
 
 let facadesFolder = try Folder(path: options.datasetPath)
 let trainFolderA = try facadesFolder.subfolder(named: "trainA")
@@ -45,7 +45,12 @@ for epoch in 0..<epochs {
     let zippedAB = zip(trainingAShuffled, trainingBShuffled)
 
     var ganGLossTotal = Tensorf(0)
-    var ganGLossCount: Float = 0
+    var ganFLossTotal = Tensorf(0)
+    
+    var discXLossTotal = Tensorf(0)
+    var discYLossTotal = Tensorf(0)
+    
+    var totalLossCount: Float = 0
     
     for batch in zippedAB.batched(batchSize) {
         let realX = batch.first.image
@@ -106,7 +111,9 @@ for epoch in 0..<epochs {
                 let discFakeX = d(fakeX)
                 let discRealX = d(realX)
                 
-                return 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zeros) + sigmoidCrossEntropy(logits: discRealX, labels: ones))
+                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zeros) + sigmoidCrossEntropy(logits: discRealX, labels: ones))
+                discXLossTotal += totalLoss
+                return totalLoss
             }
             
             let 𝛁discriminatorY = TensorFlow.gradient(at: discriminatorY) { d -> Tensorf in
@@ -114,7 +121,9 @@ for epoch in 0..<epochs {
                 let discFakeY = d(fakeY)
                 let discRealY = d(realY)
                 
-                return 0.5 * (sigmoidCrossEntropy(logits: discFakeY, labels: zeros) + sigmoidCrossEntropy(logits: discRealY, labels: ones))
+                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeY, labels: zeros) + sigmoidCrossEntropy(logits: discRealY, labels: ones))
+                discYLossTotal = totalLoss
+                return totalLoss
             }
             
             optimizerGG.update(&generatorG, along: 𝛁generatorG)
@@ -122,11 +131,28 @@ for epoch in 0..<epochs {
             optimizerDX.update(&discriminatorX, along: 𝛁discriminatorX)
             optimizerDY.update(&discriminatorY, along: 𝛁discriminatorY)
             
-            ganGLossCount += 1
+            totalLossCount += 1
         }
     }
     
-    print("Gan G loss: \(ganGLossTotal / ganGLossCount)")
+    let generatorLossG = ganGLossTotal / totalLossCount
+    let generatorLossF = ganFLossTotal / totalLossCount
+    let discriminatorLossX = discXLossTotal / totalLossCount
+    let discriminatorLossY = discYLossTotal / totalLossCount
+    
+    writer.addScalars(mainTag: "train_loss",
+                      taggedScalars: [
+                        "GeneratorG": generatorLossG.scalars[0],
+                        "GeneratorF": generatorLossF.scalars[0],
+                        "DiscriminatorX": discriminatorLossX.scalars[0],
+                        "DiscriminatorY": discriminatorLossX.scalars[0]
+                      ],
+                      globalStep: epoch)
+    
+    print("GeneratorG \(generatorLossG)")
+    print("GeneratorF \(generatorLossF)")
+    print("DiscriminatorX \(discriminatorLossX)")
+    print("DiscriminatorY \(discriminatorLossY)")
     
     for testBatch in trainDatasetA.dataset.batched(1) {
         let result = generatorG(testBatch.image)

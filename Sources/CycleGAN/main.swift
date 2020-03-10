@@ -103,7 +103,9 @@ for epoch in 0..<epochs {
                 let sameX = g(realX)
                 let identityLoss = abs(sameX - realX).mean() * lambdaL1 * 0.5
                 
-                return cycleConsistencyLoss + generatorLoss + identityLoss
+                let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
+                ganFLossTotal += totalLoss
+                return totalLoss
             }
             
             let 𝛁discriminatorX = TensorFlow.gradient(at: discriminatorX) { d -> Tensorf in
@@ -124,7 +126,7 @@ for epoch in 0..<epochs {
                 
                 let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeY, labels: zerosd)
                                        + sigmoidCrossEntropy(logits: discRealY, labels: onesd))
-                discYLossTotal = totalLoss
+                discYLossTotal += totalLoss
                 return totalLoss
             }
             

@@ -80,7 +80,7 @@ for epoch in 0..<epochs {
                 let cycleConsistencyLoss = abs(realX - cycledX).mean() * lambdaL1
 
                 let discFakeY = discriminatorY(fakeY)
-                let generatorLoss = sigmoidCrossEntropy(logits: discFakeY, labels: ones)
+                let generatorLoss = sigmoidCrossEntropy(logits: discFakeY, labels: onesd)
                 
                 let sameY = g(realY)
                 let identityLoss = abs(sameY - realY).mean() * lambdaL1 * 0.5
@@ -98,7 +98,7 @@ for epoch in 0..<epochs {
                 let cycleConsistencyLoss = abs(realY - cycledY).mean() * lambdaL1
 
                 let discFakeX = discriminatorX(fakeX)
-                let generatorLoss = sigmoidCrossEntropy(logits: discFakeX, labels: ones)
+                let generatorLoss = sigmoidCrossEntropy(logits: discFakeX, labels: onesd)
                 
                 let sameX = g(realX)
                 let identityLoss = abs(sameX - realX).mean() * lambdaL1 * 0.5
@@ -111,7 +111,8 @@ for epoch in 0..<epochs {
                 let discFakeX = d(fakeX)
                 let discRealX = d(realX)
                 
-                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zeros) + sigmoidCrossEntropy(logits: discRealX, labels: ones))
+                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zerosd)
+                                       + sigmoidCrossEntropy(logits: discRealX, labels: onesd))
                 discXLossTotal += totalLoss
                 return totalLoss
             }
@@ -121,7 +122,8 @@ for epoch in 0..<epochs {
                 let discFakeY = d(fakeY)
                 let discRealY = d(realY)
                 
-                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeY, labels: zeros) + sigmoidCrossEntropy(logits: discRealY, labels: ones))
+                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeY, labels: zerosd)
+                                       + sigmoidCrossEntropy(logits: discRealY, labels: onesd))
                 discYLossTotal = totalLoss
                 return totalLoss
             }

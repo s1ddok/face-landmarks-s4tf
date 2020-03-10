@@ -145,7 +145,7 @@ for epoch in 0..<epochs {
             totalLossCount += 1
         }
         
-        if totalLossCount % 50 == 0 {
+        if Int(totalLossCount) % 50 == 0 {
             Context.local.learningPhase = .inference
             for testBatch in trainDatasetA.dataset.batched(1) {
                 let result = generatorG(testBatch.image)

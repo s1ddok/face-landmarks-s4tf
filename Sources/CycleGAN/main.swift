@@ -53,6 +53,7 @@ for epoch in 0..<epochs {
     var totalLossCount: Float = 0
     
     for batch in zippedAB.batched(batchSize) {
+        Context.local.learningPhase = .training
         let realX = batch.first.image
         let realY = batch.second.image
     
@@ -76,8 +77,11 @@ for epoch in 0..<epochs {
             let 𝛁generatorG = TensorFlow.gradient(at: generatorG) { g -> Tensorf in
                 let fakeY = g(realX)
                 let cycledX = generatorF(fakeY)
+                let fakeX = generatorF(realY)
+                let cycledY = g(fakeX)
                 
-                let cycleConsistencyLoss = abs(realX - cycledX).mean() * lambdaL1
+                let cycleConsistencyLoss = (abs(realX - cycledX).mean() +
+                                            abs(realY - cycledY).mean()) * lambdaL1
 
                 let discFakeY = discriminatorY(fakeY)
                 let generatorLoss = sigmoidCrossEntropy(logits: discFakeY, labels: onesd)
@@ -94,8 +98,11 @@ for epoch in 0..<epochs {
             let 𝛁generatorF = TensorFlow.gradient(at: generatorF) { g -> Tensorf in
                 let fakeX = g(realY)
                 let cycledY = generatorG(fakeX)
+                let fakeY = generatorG(realX)
+                let cycledX = g(fakeY)
                 
-                let cycleConsistencyLoss = abs(realY - cycledY).mean() * lambdaL1
+                let cycleConsistencyLoss = (abs(realY - cycledY).mean()
+                                            + abs(realX - cycledX).mean()) * lambdaL1
 
                 let discFakeX = discriminatorX(fakeX)
                 let generatorLoss = sigmoidCrossEntropy(logits: discFakeX, labels: onesd)
@@ -137,6 +144,22 @@ for epoch in 0..<epochs {
             
             totalLossCount += 1
         }
+        
+        if totalLossCount % 50 == 0 {
+            Context.local.learningPhase = .inference
+            for testBatch in trainDatasetA.dataset.batched(1) {
+                let result = generatorG(testBatch.image)
+                let images = result * 0.5 + 0.5
+                
+                let image = Image(tensor: images[0] * 255)
+                
+                let currentURL = Folder.current.url.appendingPathComponent("\(epoch).jpg")
+                
+                image.save(to: currentURL, format: .rgb)
+                
+                break
+            }
+        }
     }
     
     let generatorLossG = ganGLossTotal / totalLossCount
@@ -157,17 +180,4 @@ for epoch in 0..<epochs {
     print("GeneratorF \(generatorLossF)")
     print("DiscriminatorX \(discriminatorLossX)")
     print("DiscriminatorY \(discriminatorLossY)")
-    
-    for testBatch in trainDatasetA.dataset.batched(1) {
-        let result = generatorG(testBatch.image)
-        let images = result * 0.5 + 0.5
-        
-        let image = Image(tensor: images[0] * 255)
-        
-        let currentURL = Folder.current.url.appendingPathComponent("\(epoch).jpg")
-        
-        image.save(to: currentURL, format: .rgb)
-        
-        break
-    }
 }

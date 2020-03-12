@@ -37,7 +37,7 @@ let gpuIndex = options.gpuIndex
 
 var step = 0
 
-let sampleImage = Image(jpeg: testFolderA.files.first!.url).tensor / 127.5 - 1
+let sampleImage = Image(jpeg: testFolderA.files.first!.url).tensor.expandingShape(at: 0) / 127.5 - 1
 
 for epoch in 0..<epochs {
     print("Epoch \(epoch) started at: \(Date())")

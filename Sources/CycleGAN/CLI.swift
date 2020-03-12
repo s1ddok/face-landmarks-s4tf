@@ -12,4 +12,7 @@ struct Options: ParsableArguments {
     
     @Option(default: "/tmp/tensorboardx", help: ArgumentHelp("TensorBoard logdir path", valueName: "tensorboard-logdir"))
     var tensorboardLogdir: String
+    
+    @Option(default: 20, help: ArgumentHelp("Number of steps to log a sample image into tensorboard", valueName: "sampleLogPeriod"))
+    var sampleLogPeriod: Int
 }

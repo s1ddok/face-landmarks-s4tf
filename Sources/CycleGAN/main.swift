@@ -115,17 +115,6 @@ for epoch in 0..<epochs {
                 return totalLoss
             }
             
-            let 𝛁discriminatorY = TensorFlow.gradient(at: discriminatorY) { d -> Tensorf in
-                let fakeY = generatorG(realX)
-                let discFakeX = d(fakeY)
-                let discRealX = d(realY)
-                
-                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zerosd)
-                                       + sigmoidCrossEntropy(logits: discRealX, labels: onesd))
-                discXLossTotal += totalLoss
-                return totalLoss
-            }
-            
             let 𝛁discriminatorX = TensorFlow.gradient(at: discriminatorX) { d -> Tensorf in
                 let fakeX = generatorF(realY)
                 let discFakeX = d(fakeX)
@@ -134,6 +123,17 @@ for epoch in 0..<epochs {
                 let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zerosd)
                                        + sigmoidCrossEntropy(logits: discRealX, labels: onesd))
                 discYLossTotal += totalLoss
+                return totalLoss
+            }
+            
+            let 𝛁discriminatorY = TensorFlow.gradient(at: discriminatorY) { d -> Tensorf in
+                let fakeY = generatorG(realX)
+                let discFakeY = d(fakeY)
+                let discRealY = d(realY)
+                
+                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeY, labels: zerosd)
+                                       + sigmoidCrossEntropy(logits: discRealY, labels: onesd))
+                discXLossTotal += totalLoss
                 return totalLoss
             }
             

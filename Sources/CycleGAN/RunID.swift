@@ -12,7 +12,7 @@ func currentRunId(logDir: URL, runIdFileName: String = ".run") -> Int {
     
     let data = Data(bytes: &runId, count: MemoryLayout<Int>.stride)
     
-    try? data.write(to: runIdURL, options: .atomicWrite)
+    try? data.write(to: runIdURL)
     
     return runId
 }

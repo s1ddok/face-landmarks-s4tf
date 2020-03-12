@@ -74,6 +74,9 @@ for epoch in 0..<epochs {
             let onesd = ones.broadcasted(to: [1, 30, 30, 1])
             let zerosd = zeros.broadcasted(to: [1, 30, 30, 1])
             
+            var _fakeX = Tensorf.zero
+            var _fakeY = Tensorf.zero
+            
             let (gLoss, 𝛁generatorG) = valueWithGradient(at: generatorG) { g -> Tensorf in
                 let fakeY = g(realX)
                 let cycledX = generatorF(fakeY)
@@ -91,6 +94,8 @@ for epoch in 0..<epochs {
 
                 let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
 
+                _fakeX = fakeX
+                
                 return totalLoss
             }
 
@@ -111,12 +116,12 @@ for epoch in 0..<epochs {
 
                 let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
 
+                _fakeY = fakeY
                 return totalLoss
             }
 
             let (xLoss, 𝛁discriminatorX) = valueWithGradient(at: discriminatorX) { d -> Tensorf in
-                let fakeX = generatorF(realY)
-                let discFakeX = d(fakeX)
+                let discFakeX = d(_fakeX)
                 let discRealX = d(realX)
 
                 let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zerosd)
@@ -126,8 +131,7 @@ for epoch in 0..<epochs {
             }
 
             let (yLoss, 𝛁discriminatorY) = valueWithGradient(at: discriminatorY) { d -> Tensorf in
-                let fakeY = generatorG(realX)
-                let discFakeY = d(fakeY)
+                let discFakeY = d(_fakeY)
                 let discRealY = d(realY)
 
                 let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeY, labels: zerosd)

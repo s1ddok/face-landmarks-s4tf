@@ -347,7 +347,7 @@ public struct ResnetBlock<NT: FeatureChannelInitializable>: Layer where NT.Tange
             retVal = dropOut(retVal)
         }
         
-        retVal = input.padded(forSizes: [(0, 0), (1, 1), (1, 1), (0, 0)], mode: self.paddingMode)
+        retVal = retVal.padded(forSizes: [(0, 0), (1, 1), (1, 1), (0, 0)], mode: self.paddingMode)
         retVal = retVal.sequenced(through: conv2, norm2)
         
         return input + retVal

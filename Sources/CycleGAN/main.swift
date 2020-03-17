@@ -31,8 +31,8 @@ let optimizerDY = Adam(for: discriminatorY, learningRate: 0.0002, beta1: 0.5)
 let epochs = options.epochs
 let batchSize = 1
 let lambdaL1 = Tensorf(10)
-let zeros = Tensorf.zero
-let ones = Tensorf.one
+let _zeros = Tensorf.zero
+let _ones = Tensorf.one
 let gpuIndex = options.gpuIndex
 
 var step = 0
@@ -71,8 +71,8 @@ for epoch in 0..<epochs {
             let realX = croppedImages[0].expandingShape(at: 0)
             let realY = croppedImages[1].expandingShape(at: 0)
             
-            let onesd = ones.broadcasted(to: [1, 30, 30, 1])
-            let zerosd = zeros.broadcasted(to: [1, 30, 30, 1])
+            let onesd = _ones.broadcasted(to: [1, 30, 30, 1])
+            let zerosd = _zeros.broadcasted(to: [1, 30, 30, 1])
             
             var _fakeX = Tensorf.zero
             var _fakeY = Tensorf.zero

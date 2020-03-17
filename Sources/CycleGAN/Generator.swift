@@ -73,15 +73,7 @@ public struct ResNetGenerator<NT: FeatureChannelInitializable>: Layer where NT.T
     var conv3: Conv2D<Float>
     var norm3: NT
     
-    var resblock1: ResnetBlock<NT>
-    var resblock2: ResnetBlock<NT>
-    var resblock3: ResnetBlock<NT>
-    var resblock4: ResnetBlock<NT>
-    var resblock5: ResnetBlock<NT>
-    var resblock6: ResnetBlock<NT>
-    var resblock7: ResnetBlock<NT>
-    var resblock8: ResnetBlock<NT>
-    var resblock9: ResnetBlock<NT>
+    var resblocks: [ResnetBlock<NT>]
     
     var upConv1: TransposedConv2D<Float>
     var upNorm1: NT
@@ -131,60 +123,14 @@ public struct ResNetGenerator<NT: FeatureChannelInitializable>: Layer where NT.T
         
         mult = 4
         
-        self.resblock1 = ResnetBlock(channels: ngf * mult,
-                                     paddingMode: .reflect,
-                                     normalization: normalization,
-                                     useDropOut: useDropout,
-                                     filterInit: filterInit,
-                                     biasInit: biasInit)
-        self.resblock2 = ResnetBlock(channels: ngf * mult,
-                                     paddingMode: .reflect,
-                                     normalization: normalization,
-                                     useDropOut: useDropout,
-                                     filterInit: filterInit,
-                                     biasInit: biasInit)
-        self.resblock3 = ResnetBlock(channels: ngf * mult,
-                                     paddingMode: .reflect,
-                                     normalization: normalization,
-                                     useDropOut: useDropout,
-                                     filterInit: filterInit,
-                                     biasInit: biasInit)
-        self.resblock4 = ResnetBlock(channels: ngf * mult,
-                                     paddingMode: .reflect,
-                                     normalization: normalization,
-                                     useDropOut: useDropout,
-                                     filterInit: filterInit,
-                                     biasInit: biasInit)
-        self.resblock5 = ResnetBlock(channels: ngf * mult,
-                                     paddingMode: .reflect,
-                                     normalization: normalization,
-                                     useDropOut: useDropout,
-                                     filterInit: filterInit,
-                                     biasInit: biasInit)
-        self.resblock6 = ResnetBlock(channels: ngf * mult,
-                                     paddingMode: .reflect,
-                                     normalization: normalization,
-                                     useDropOut: useDropout,
-                                     filterInit: filterInit,
-                                     biasInit: biasInit)
-        self.resblock7 = ResnetBlock(channels: ngf * mult,
-                                     paddingMode: .reflect,
-                                     normalization: normalization,
-                                     useDropOut: useDropout,
-                                     filterInit: filterInit,
-                                     biasInit: biasInit)
-        self.resblock8 = ResnetBlock(channels: ngf * mult,
-                                     paddingMode: .reflect,
-                                     normalization: normalization,
-                                     useDropOut: useDropout,
-                                     filterInit: filterInit,
-                                     biasInit: biasInit)
-        self.resblock9 = ResnetBlock(channels: ngf * mult,
-                                     paddingMode: .reflect,
-                                     normalization: normalization,
-                                     useDropOut: useDropout,
-                                     filterInit: filterInit,
-                                     biasInit: biasInit)
+        self.resblocks = (0..<blocks).map { _ in
+            ResnetBlock(channels: ngf * mult,
+                        paddingMode: .reflect,
+                        normalization: normalization,
+                        useDropOut: useDropout,
+                        filterInit: filterInit,
+                        biasInit: biasInit)
+        }
         
         mult = 4
         
@@ -217,19 +163,11 @@ public struct ResNetGenerator<NT: FeatureChannelInitializable>: Layer where NT.T
         x = relu(x)
         x = x.sequenced(through: conv2, norm2)
         x = relu(x)
-                        print(x.shape)
+        
         x = x.sequenced(through: conv3, norm3)
         x = relu(x)
         
-        x = resblock1(x)
-        x = resblock2(x)
-        x = resblock3(x)
-        x = resblock4(x)
-        x = resblock5(x)
-        x = resblock6(x)
-        x = resblock7(x)
-        x = resblock8(x)
-        x = resblock9(x)
+        x = resblocks(x)
         
         x = x.sequenced(through: upConv1, upNorm1)
         x = relu(x)

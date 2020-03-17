@@ -18,8 +18,8 @@ let testFolderB = try datasetFolder.subfolder(named: "testB")
 let trainDatasetA = try Images(folder: trainFolderA)
 let trainDatasetB = try Images(folder: trainFolderB)
 
-var generatorG = NetG(inputChannels: 3, outputChannels: 3, ngf: 64, normalization: InstanceNorm2D.self, useDropout: false)
-var generatorF = NetG(inputChannels: 3, outputChannels: 3, ngf: 64, normalization: InstanceNorm2D.self, useDropout: false)
+var generatorG = ResNetGenerator(inputChannels: 3, outputChannels: 3, blocks: 9, ngf: 64, normalization: InstanceNorm2D.self)
+var generatorF = ResNetGenerator(inputChannels: 3, outputChannels: 3, blocks: 9, ngf: 64, normalization: InstanceNorm2D.self)
 var discriminatorX = NetD(inChannels: 3, lastConvFilters: 64)
 var discriminatorY = NetD(inChannels: 3, lastConvFilters: 64)
 

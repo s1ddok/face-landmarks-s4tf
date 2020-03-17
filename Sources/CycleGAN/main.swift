@@ -9,6 +9,8 @@ let runId = currentRunId(logDir: logDirURL)
 let writerURL = logDirURL.appendingPathComponent(String(runId), isDirectory: true)
 let writer = SummaryWriter(logdir: writerURL)
 
+print("Starting with run id: \(runId)")
+
 let datasetFolder = try Folder(path: options.datasetPath)
 let trainFolderA = try datasetFolder.subfolder(named: "trainA")
 let trainFolderB = try datasetFolder.subfolder(named: "trainB")

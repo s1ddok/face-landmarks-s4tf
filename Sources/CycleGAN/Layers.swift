@@ -15,27 +15,6 @@ public struct LeakyRELU: ParameterlessLayer {
     }
 }
 
-public struct Tanh: ParameterlessLayer {
-    @differentiable
-    public func callAsFunction(_ input: Tensorf) -> Tensorf {
-        return tanh(input)
-    }
-}
-
-public struct RELU: ParameterlessLayer {
-    @differentiable
-    public func callAsFunction(_ input: Tensorf) -> Tensorf {
-        return relu(input)
-    }
-}
-
-struct ELU: ParameterlessLayer {
-    @differentiable
-    func callAsFunction(_ input: Tensorf) -> Tensorf {
-        return elu(input)
-    }
-}
-
 /// 2-D layer applying instance normalization over a mini-batch of inputs.
 ///
 /// Reference: [Instance Normalization](https://arxiv.org/abs/1607.08022)
@@ -181,10 +160,8 @@ public struct ConvLayer: Layer {
 }
 
 public struct UNetSkipConnectionInnermost<NT: FeatureChannelInitializable>: Layer where NT.TangentVector.VectorSpaceScalar == Float, NT.Input == Tensorf, NT.Output == Tensorf {
-    public var downRELU = LeakyRELU()
     public var downConv: Conv2D<Float>
     public var upConv: TransposedConv2D<Float>
-    public var upRELU = RELU()
     public var upNorm: NT
     
     public init(inChannels: Int,
@@ -205,9 +182,9 @@ public struct UNetSkipConnectionInnermost<NT: FeatureChannelInitializable>: Laye
     
     @differentiable
     public func callAsFunction(_ input: Tensorf) -> Tensorf {
-        var x = self.downRELU(input)
+        var x = leakyRelu(input)
         x = self.downConv(x)
-        x = self.upRELU(x)
+        x = relu(x)
         x = self.upConv(x)
         x = self.upNorm(x)
 
@@ -217,11 +194,9 @@ public struct UNetSkipConnectionInnermost<NT: FeatureChannelInitializable>: Laye
 
 
 public struct UNetSkipConnection<SMT: Layer, NT: FeatureChannelInitializable>: Layer where NT.TangentVector.VectorSpaceScalar == Float, NT.Input == Tensorf, NT.Output == Tensorf, SMT.TangentVector.VectorSpaceScalar == Float, SMT.Input == Tensorf, SMT.Output == Tensorf {
-    public var downRELU = LeakyRELU()
     public var downConv: Conv2D<Float>
     public var downNorm: NT
     public var upConv: TransposedConv2D<Float>
-    public var upRELU = RELU()
     public var upNorm: NT
     public var dropOut = Dropout<Float>(probability: 0.5)
     @noDerivative public var useDropOut: Bool
@@ -253,11 +228,11 @@ public struct UNetSkipConnection<SMT: Layer, NT: FeatureChannelInitializable>: L
     
     @differentiable
     public func callAsFunction(_ input: Tensorf) -> Tensorf {
-        var x = self.downRELU(input)
+        var x = leakyRelu(input)
         x = self.downConv(x)
         x = self.downNorm(x)
         x = self.submodule(x)
-        x = self.upRELU(x)
+        x = relu(x)
         x = self.upConv(x)
         x = self.upNorm(x)
         
@@ -272,7 +247,6 @@ public struct UNetSkipConnection<SMT: Layer, NT: FeatureChannelInitializable>: L
 public struct UNetSkipConnectionOutermost<NT: Layer>: Layer where NT.TangentVector.VectorSpaceScalar == Float, NT.Input == Tensorf, NT.Output == Tensorf {
     public var downConv: Conv2D<Float>
     public var upConv: TransposedConv2D<Float>
-    public var upRELU = RELU()
     
     public var submodule: NT
     
@@ -297,7 +271,7 @@ public struct UNetSkipConnectionOutermost<NT: Layer>: Layer where NT.TangentVect
     public func callAsFunction(_ input: Tensorf) -> Tensorf {
         var x = self.downConv(input)
         x = self.submodule(x)
-        x = self.upRELU(x)
+        x = relu(x)
         x = self.upConv(x)
 
         return x

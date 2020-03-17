@@ -303,3 +303,68 @@ public struct UNetSkipConnectionOutermost<NT: Layer>: Layer where NT.TangentVect
         return x
     }
 }
+
+public struct ResnetBlock<NT: FeatureChannelInitializable>: Layer where NT.TangentVector.VectorSpaceScalar == Float, NT.Input == Tensorf, NT.Output == Tensorf {
+    var conv1: Conv2D<Float>
+    var norm1: NT
+    var conv2: Conv2D<Float>
+    var norm2: NT
+    
+    var dropOut: Dropout<Float>
+    
+    @noDerivative var useDropOut: Bool
+    @noDerivative let paddingMode: Tensorf.PaddingMode
+    
+    public init(channels: Int,
+                paddingMode: Tensorf.PaddingMode,
+                normalization: NT.Type,
+                useDropOut: Bool = false,
+                filterInit: (TensorShape) -> Tensorf,
+                biasInit: (TensorShape) -> Tensorf) {
+        self.conv1 = .init(filterShape: (channels, channels, 3, 3),
+                           padding: .same,
+                           filterInitializer: filterInit,
+                           biasInitializer: biasInit)
+        self.norm1 = .init(featureCount: channels)
+        
+        self.conv2 = .init(filterShape: (channels, channels, 3, 3),
+                           padding: .same,
+                           filterInitializer: filterInit,
+                           biasInitializer: biasInit)
+        self.norm2 = .init(featureCount: channels)
+        
+        self.dropOut = .init(probability: 0.5)
+        self.useDropOut = useDropOut
+        
+        self.paddingMode = paddingMode
+    }
+    
+    @differentiable
+    public func callAsFunction(_ input: Tensorf) -> Tensorf {
+        var retVal = input.padded(forSizes: [(0, 0), (1, 1), (1, 1), (0, 0)], mode: self.paddingMode)
+        retVal = retVal.sequenced(through: conv1, norm1)
+        retVal = relu(retVal)
+        
+        if useDropOut {
+            retVal = dropOut(retVal)
+        }
+        
+        retVal = input.padded(forSizes: [(0, 0), (1, 1), (1, 1), (0, 0)], mode: self.paddingMode)
+        retVal = retVal.sequenced(through: conv2, norm2)
+        
+        return input + retVal
+        
+    }
+}
+
+extension Array: Module where Element: Layer, Element.Input == Element.Output {
+    public typealias Input = Element.Input
+    public typealias Output = Element.Output
+
+    @differentiable
+    public func callAsFunction(_ input: Input) -> Output {
+        differentiableReduce(input) { $1($0) }
+    }
+}
+
+extension Array: Layer where Element: Layer, Element.Input == Element.Output {}

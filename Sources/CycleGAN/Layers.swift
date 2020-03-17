@@ -321,12 +321,12 @@ public struct ResnetBlock<NT: FeatureChannelInitializable>: Layer where NT.Tange
                 useDropOut: Bool = false,
                 filterInit: (TensorShape) -> Tensorf,
                 biasInit: (TensorShape) -> Tensorf) {
-        self.conv1 = .init(filterShape: (channels, channels, 3, 3),
+        self.conv1 = .init(filterShape: (3, 3, channels, channels),
                            filterInitializer: filterInit,
                            biasInitializer: biasInit)
         self.norm1 = .init(featureCount: channels)
         
-        self.conv2 = .init(filterShape: (channels, channels, 3, 3),
+        self.conv2 = .init(filterShape: (3, 3, channels, channels),
                            filterInitializer: filterInit,
                            biasInitializer: biasInit)
         self.norm2 = .init(featureCount: channels)

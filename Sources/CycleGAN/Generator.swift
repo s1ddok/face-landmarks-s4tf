@@ -93,7 +93,7 @@ public struct ResNetGenerator<NT: FeatureChannelInitializable>: Layer where NT.T
         let useBias = self.norm1 is InstanceNorm2D<Float>
         
         let filterInit: (TensorShape) -> Tensorf = { Tensorf(randomNormal: $0, standardDeviation: Tensorf(0.02)) }
-        let biasInit: (TensorShape) -> Tensorf = useBias ? zeros() : filterInit
+        let biasInit: (TensorShape) -> Tensorf = useBias ? filterInit : zeros()
         
         self.conv1 = .init(filterShape: (7, 7,
                                          inputChannels, ngf),
@@ -106,6 +106,7 @@ public struct ResNetGenerator<NT: FeatureChannelInitializable>: Layer where NT.T
         self.conv2 = .init(filterShape: (3, 3,
                                          ngf * mult, ngf * mult * 2),
                            strides: (2, 2),
+                           padding: .same,
                            filterInitializer: filterInit,
                            biasInitializer: biasInit)
         self.norm2 = .init(featureCount: ngf * mult * 2)
@@ -115,6 +116,7 @@ public struct ResNetGenerator<NT: FeatureChannelInitializable>: Layer where NT.T
         self.conv3 = .init(filterShape: (3, 3,
                                          ngf * mult, ngf * mult * 2),
                            strides: (2, 2),
+                           padding: .same,
                            filterInitializer: filterInit,
                            biasInitializer: biasInit)
         self.norm3 = .init(featureCount: ngf * mult * 2)
@@ -132,21 +134,24 @@ public struct ResNetGenerator<NT: FeatureChannelInitializable>: Layer where NT.T
         
         mult = 4
         
-        self.upConv1 = .init(filterShape: (3, 3, ngf * mult, ngf * mult / 2),
-                             strides: (1, 1),
+        self.upConv1 = .init(filterShape: (3, 3, ngf * mult / 2, ngf * mult),
+                             strides: (2, 2),
+                             padding: .same,
                              filterInitializer: filterInit,
                              biasInitializer: biasInit)
         self.upNorm1 = .init(featureCount: ngf * mult / 2)
         
         mult = 2
         
-        self.upConv2 = .init(filterShape: (3, 3, ngf * mult, ngf * mult / 2),
-                             strides: (1, 1),
+        self.upConv2 = .init(filterShape: (3, 3, ngf * mult / 2, ngf * mult),
+                             strides: (2, 2),
+                             padding: .same,
                              filterInitializer: filterInit,
                              biasInitializer: biasInit)
         self.upNorm2 = .init(featureCount: ngf * mult / 2)
         
         self.lastConv = .init(filterShape: (7, 7, ngf, outputChannels),
+                              padding: .same,
                               filterInitializer: filterInit,
                               biasInitializer: biasInit)
     }
@@ -168,7 +173,6 @@ public struct ResNetGenerator<NT: FeatureChannelInitializable>: Layer where NT.T
         x = x.sequenced(through: upConv2, upNorm2)
         x = relu(x)
         
-        x = x.padded(forSizes: [(0, 0), (3, 3), (3, 3), (0, 0)], mode: .reflect)
         x = lastConv(x)
         x = tanh(x)
         

@@ -91,15 +91,17 @@ for epoch in 0..<epochs {
                          scalar: loss.scalars[0],
                          globalStep: step)
         
-        step += 1
-    }
-    
-    if step % options.sampleLogPeriod == 0 {
-        let landmarks = model(sampleImage)[0]
+        writer.flush()
         
-        saveResultImage(image: sampleImage[0] * 0.5 + 0.5,
-                        landmarks: landmarks * 260,
-                        url: Folder.current.url.appendingPathComponent("intermediate\(step).jpg"))
+        step += 1
+        
+        if step % options.sampleLogPeriod == 0 {
+            let landmarks = model(sampleImage)[0]
+            
+            saveResultImage(image: sampleImage[0] * 0.5 + 0.5,
+                            landmarks: landmarks * 260,
+                            url: Folder.current.url.appendingPathComponent("intermediate\(step).jpg"))
+        }
     }
 }
 

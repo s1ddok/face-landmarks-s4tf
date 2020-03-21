@@ -98,7 +98,7 @@ for epoch in 0..<epochs {
         let landmarks = model(sampleImage)[0]
         
         saveResultImage(image: sampleImage[0] * 0.5 + 0.5,
-                        landmarks: landmarks,
+                        landmarks: landmarks * 260,
                         url: Folder.current.url.appendingPathComponent("intermediate\(step).jpg"))
     }
 }
@@ -114,8 +114,8 @@ for testBatch in trainDataset.dataset.batched(1) {
     let predictedLandmarks = model(images)
 
     saveResultImageWithGT(image: images[0] * 0.5 + 0.5,
-                          landmarks: predictedLandmarks[0],
-                          groundTruth: gtLandmarks[0],
+                          landmarks: predictedLandmarks[0] * 260,
+                          groundTruth: gtLandmarks[0] * 260,
                           url: resultsFolder.url.appendingPathComponent("\(testStep).jpg"))
     testStep += 1
 }

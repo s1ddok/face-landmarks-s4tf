@@ -10,6 +10,9 @@ struct Options: ParsableArguments {
     @Option(default: 200, help: ArgumentHelp("Number of epochs", valueName: "epochs"))
     var epochs: Int
     
+    @Option(default: 16, help: ArgumentHelp("Numer of images in a single batch", valueName: "batch-size"))
+    var batchSize: Int
+    
     @Option(default: "/tmp/tensorboardx", help: ArgumentHelp("TensorBoard logdir path", valueName: "tensorboard-logdir"))
     var tensorboardLogdir: String
     

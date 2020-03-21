@@ -4,10 +4,10 @@
 import PackageDescription
 
 let package = Package(
-    name: "CycleGAN",
+    name: "FaceLandmarks",
     platforms: [.macOS(SupportedPlatform.MacOSVersion.v10_13)],
     products: [
-        .executable(name: "CycleGAN", targets: ["CycleGAN"]),
+        .executable(name: "FaceLandmarks", targets: ["FaceLandmarks"]),
     ],
     dependencies: [
         .package(url: "https://github.com/JohnSundell/Files", from: "4.0.0"),
@@ -16,7 +16,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "CycleGAN",
+            name: "FaceLandmarks",
             dependencies: ["Files", "TensorBoardX", .product(name: "ArgumentParser", package: "swift-argument-parser")])
     ]
 )

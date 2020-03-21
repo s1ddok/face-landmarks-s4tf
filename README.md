@@ -1,14 +1,14 @@
-# CycleGAN (WIP)
+# FaceLandmarks (WIP)
 
 WIP
 
-In order to run the project you have to just call 
+In order to run the project you have to just call
 
 ```bash
 swift run -c release
 ```
 
-You will need a tensorboard installation in order to run the project. 
+You will need a tensorboard installation in order to run the project.
 
 
 ## Notes

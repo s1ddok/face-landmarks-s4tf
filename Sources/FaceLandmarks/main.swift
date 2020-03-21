@@ -25,13 +25,20 @@ let gpuIndex = options.gpuIndex
 
 var step = 0
 
-let sampleImage = Image(jpeg: datasetFolder.files.first!.url).tensor.expandingShape(at: 0) / 127.5 - 1
+var sampleImage: Tensorf = .zero
+var sampleLandmarks: Tensorf = .zero
+    
+for batch in trainDataset.dataset.batched(1) {
+    sampleImage = batch.image
+    sampleLandmarks = batch.landmarks
+    break
+}
 
 let plt = Python.import("matplotlib.pyplot")
 
 public func saveResultImageWithGT(image: Tensor<Float>, landmarks: Tensor<Float>, groundTruth: Tensor<Float>, url: URL) {
     let dpi: Float = 300
-    let figure = plt.figure(figsize: [2 * Float(image.shape[0]) / dpi, 2 * Float(image.shape[1]) / dpi], dpi: dpi)
+    let figure = plt.figure(figsize: [Float(image.shape[0]) / dpi, Float(image.shape[1]) / dpi], dpi: dpi)
     let img = plt.subplot(1, 1, 1)
     img.axis("off")
     let x = image.makeNumpyArray()
@@ -84,7 +91,7 @@ for epoch in 0..<epochs {
             
             saveResultImageWithGT(image: sampleImage[0] * 0.5 + 0.5,
                                   landmarks: predictedLandmarks * 260,
-                                  groundTruth: landmarks * 260,
+                                  groundTruth: sampleLandmarks * 260,
                                   url: Folder.current.url.appendingPathComponent("intermediate\(step).jpg"))
         }
     }

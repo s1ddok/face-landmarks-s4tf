@@ -35,7 +35,7 @@ public class LabeledImages {
             elements += 1
         }
 
-        let source = Tensorf(shape: [elements, 256, 256, 3], scalars: imageArray) / 127.5 - 1.0
+        let source = Tensorf(shape: [elements, imageSize.0, imageSize.1, 3], scalars: imageArray) / 127.5 - 1.0
         let landmarks = Tensorf(shape: [elements, 68 * 2], scalars: landmarksArray)
         self.dataset = .init(elements: Elements(image: source, landmarks: landmarks))
         

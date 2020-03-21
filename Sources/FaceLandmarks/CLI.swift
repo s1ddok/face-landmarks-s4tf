@@ -1,7 +1,7 @@
 import ArgumentParser
 
 struct Options: ParsableArguments {
-    @Option(default: "/notebooks/avolodin/data/horse2zebra/", help: ArgumentHelp("Path to the dataset folder", valueName: "dataset"))
+    @Option(default: "/notebooks/avolodin/data/wlp/", help: ArgumentHelp("Path to the dataset folder", valueName: "dataset"))
     var datasetPath: String
     
     @Option(default: 3, help: ArgumentHelp("GPU Index", valueName: "gpu-index"))

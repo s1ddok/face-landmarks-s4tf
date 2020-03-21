@@ -29,22 +29,6 @@ let sampleImage = Image(jpeg: datasetFolder.files.first!.url).tensor.expandingSh
 
 let plt = Python.import("matplotlib.pyplot")
 
-public func saveResultImage(image: Tensor<Float>, landmarks: Tensor<Float>, url: URL) {
-    let dpi: Float = 300
-    let figure = plt.figure(figsize: [2 * Float(image.shape[0]) / dpi, 2 * Float(image.shape[1]) / dpi], dpi: dpi)
-    let img = plt.subplot(1, 1, 1)
-    img.axis("off")
-    let x = image.makeNumpyArray()
-    img.imshow(x)
-           
-    let lmx = (0..<68).map { landmarks.scalars[$0 * 2 + 0] }
-    let lmy = (0..<68).map { landmarks.scalars[$0 * 2 + 1] }
-    img.scatter(lmx.makeNumpyArray(), lmy.makeNumpyArray(), s: 0.2)
-    
-    plt.savefig(url.path, bbox_inches: "tight", pad_inches: 0, dpi: dpi)
-    plt.close(figure)
-}
-
 public func saveResultImageWithGT(image: Tensor<Float>, landmarks: Tensor<Float>, groundTruth: Tensor<Float>, url: URL) {
     let dpi: Float = 300
     let figure = plt.figure(figsize: [2 * Float(image.shape[0]) / dpi, 2 * Float(image.shape[1]) / dpi], dpi: dpi)
@@ -96,11 +80,12 @@ for epoch in 0..<epochs {
         step += 1
         
         if step % options.sampleLogPeriod == 0 {
-            let landmarks = model(sampleImage)[0]
+            let predictedLandmarks = model(sampleImage)[0]
             
-            saveResultImage(image: sampleImage[0] * 0.5 + 0.5,
-                            landmarks: landmarks * 260,
-                            url: Folder.current.url.appendingPathComponent("intermediate\(step).jpg"))
+            saveResultImageWithGT(image: sampleImage[0] * 0.5 + 0.5,
+                                  landmarks: predictedLandmarks * 260,
+                                  groundTruth: landmarks * 260,
+                                  url: Folder.current.url.appendingPathComponent("intermediate\(step).jpg"))
         }
     }
 }

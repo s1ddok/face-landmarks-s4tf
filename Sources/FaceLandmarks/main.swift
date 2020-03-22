@@ -71,7 +71,7 @@ for epoch in 0..<epochs {
         let (loss, 𝛁model) = valueWithGradient(at: model) { model -> Tensorf in
             let predictedLandmarks = model(images)
             
-            let loss = meanSquaredError(predicted: predictedLandmarks, expected: landmarks)
+            let loss = wingLoss(predicted: predictedLandmarks, expected: landmarks)
             
             return loss
         }

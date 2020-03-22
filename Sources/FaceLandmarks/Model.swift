@@ -29,11 +29,9 @@ fileprivate func roundFilterPair(filters: (Int, Int)) -> (Int, Int) {
 
 public struct InitialMBConvBlock: Layer {
     public var dConv: DepthwiseConv2D<Float>
-    public var batchNormDConv: BatchNorm<Float>
     public var seReduceConv: Conv2D<Float>
     public var seExpandConv: Conv2D<Float>
     public var conv2: Conv2D<Float>
-    public var batchNormConv: BatchNorm<Float>
 
     public init(filters: (Int, Int)) {
         let filterMult = roundFilterPair(filters: filters)
@@ -53,13 +51,11 @@ public struct InitialMBConvBlock: Layer {
             filterShape: (1, 1, filterMult.0, filterMult.1),
             strides: (1, 1),
             padding: .same)
-        batchNormDConv = BatchNorm(featureCount: filterMult.0)
-        batchNormConv = BatchNorm(featureCount: filterMult.1)
     }
 
     @differentiable
     public func callAsFunction(_ input: Tensor<Float>) -> Tensor<Float> {
-        let dw = swish(batchNormDConv(dConv(input)))
+        let dw = swish(dConv(input))
         let se = sigmoid(seExpandConv(swish(seReduceConv(dw))))
         return conv2(se)
     }
@@ -71,13 +67,10 @@ public struct MBConvBlock: Layer {
     @noDerivative public let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
 
     public var conv1: Conv2D<Float>
-    public var batchNormConv1: BatchNorm<Float>
     public var dConv: DepthwiseConv2D<Float>
-    public var batchNormDConv: BatchNorm<Float>
     public var seReduceConv: Conv2D<Float>
     public var seExpandConv: Conv2D<Float>
     public var conv2: Conv2D<Float>
-    public var batchNormConv2: BatchNorm<Float>
 
     public init(
         filters: (Int, Int),
@@ -111,22 +104,19 @@ public struct MBConvBlock: Layer {
             filterShape: (1, 1, hiddenDimension, filterMult.1),
             strides: (1, 1),
             padding: .same)
-        batchNormConv1 = BatchNorm(featureCount: hiddenDimension)
-        batchNormDConv = BatchNorm(featureCount: hiddenDimension)
-        batchNormConv2 = BatchNorm(featureCount: filterMult.1)
     }
 
     @differentiable
     public func callAsFunction(_ input: Tensor<Float>) -> Tensor<Float> {
-        let pw = swish(batchNormConv1(conv1(input)))
+        let pw = swish(conv1(input))
         var dw: Tensor<Float>
         if self.strides == (1, 1) {
-            dw = swish(batchNormDConv(dConv(pw)))
+            dw = swish(dConv(pw))
         } else {
-            dw = swish(zeroPad(batchNormDConv(dConv(pw))))
+            dw = swish(zeroPad(dConv(pw)))
         }
         let se = sigmoid(seExpandConv(swish(seReduceConv(dw))))
-        let pwLinear = batchNormConv2(conv2(se))
+        let pwLinear = conv2(se)
 
         if self.addResLayer {
             return input + pwLinear
@@ -161,7 +151,6 @@ public struct MBConvBlockStack: Layer {
 
 public struct EfficientNet: Layer {
     public var inputConv: Conv2D<Float>
-    public var inputConvBatchNorm: BatchNorm<Float>
     public var initialMBConv: InitialMBConvBlock
 
     public var residualBlockStack1: MBConvBlockStack
@@ -189,7 +178,6 @@ public struct EfficientNet: Layer {
             filterShape: (3, 3, 3, roundFilterCountDown(filter: 32)),
             strides: (2, 2),
             padding: .same)
-        inputConvBatchNorm = BatchNorm(featureCount: roundFilterCountDown(filter: 32))
 
         // global filter resizing happens at block layer
         initialMBConv = InitialMBConvBlock(filters: (32, 16))
@@ -214,8 +202,7 @@ public struct EfficientNet: Layer {
 
     @differentiable
     public func callAsFunction(_ input: Tensor<Float>) -> Tensor<Float> {
-        let convolved = input.sequenced(through: inputConv, inputConvBatchNorm,
-            initialMBConv)
+        let convolved = input.sequenced(through: inputConv, initialMBConv)
         let backbone = convolved.sequenced(through: residualBlockStack1, residualBlockStack2,
             residualBlockStack3, residualBlockStack4, residualBlockStack5, residualBlockStack6)
         return backbone.sequenced(through: finalConv, avgPool)

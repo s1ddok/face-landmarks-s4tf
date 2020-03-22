@@ -56,7 +56,7 @@ public struct InitialMBConvBlock: Layer {
     @differentiable
     public func callAsFunction(_ input: Tensor<Float>) -> Tensor<Float> {
         let dw = swish(dConv(input))
-        let se = sigmoid(seExpandConv(swish(seReduceConv(dw))))
+        let se = dw * sigmoid(seExpandConv(swish(seReduceConv(dw))))
         return conv2(se)
     }
 }
@@ -115,7 +115,7 @@ public struct MBConvBlock: Layer {
         } else {
             dw = swish(zeroPad(dConv(pw)))
         }
-        let se = sigmoid(seExpandConv(swish(seReduceConv(dw))))
+        let se = dw * sigmoid(seExpandConv(swish(seReduceConv(dw))))
         let pwLinear = conv2(se)
 
         if self.addResLayer {
@@ -196,7 +196,7 @@ public struct EfficientNet: Layer {
 
     @differentiable
     public func callAsFunction(_ input: Tensor<Float>) -> Tensor<Float> {
-        let convolved = input.sequenced(through: inputConv, initialMBConv)
+        let convolved = initialMBConv(swish(inputConv(input)))
         let backbone = convolved.sequenced(through: residualBlockStack1, residualBlockStack2,
             residualBlockStack3, residualBlockStack5)
         return backbone.sequenced(through: finalConv, avgPool)

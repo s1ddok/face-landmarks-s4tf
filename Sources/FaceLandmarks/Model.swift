@@ -156,9 +156,7 @@ public struct EfficientNet: Layer {
     public var residualBlockStack1: MBConvBlockStack
     public var residualBlockStack2: MBConvBlockStack
     public var residualBlockStack3: MBConvBlockStack
-    public var residualBlockStack4: MBConvBlockStack
     public var residualBlockStack5: MBConvBlockStack
-    public var residualBlockStack6: MBConvBlockStack
 
     public var finalConv: Conv2D<Float>
     public var avgPool = GlobalAvgPool2D<Float>()
@@ -187,15 +185,11 @@ public struct EfficientNet: Layer {
         residualBlockStack2 = MBConvBlockStack(filters: (24, 40), kernel: (5, 5),
             blockCount: 2)
         residualBlockStack3 = MBConvBlockStack(filters: (40, 80), blockCount: 3)
-        residualBlockStack4 = MBConvBlockStack(filters: (80, 112), initialStrides: (1, 1),
-            kernel: (5, 5), blockCount: 3)
-        residualBlockStack5 = MBConvBlockStack(filters: (112, 192), kernel: (5, 5),
+        residualBlockStack5 = MBConvBlockStack(filters: (80, 136), kernel: (5, 5),
             blockCount: 4)
-        residualBlockStack6 = MBConvBlockStack(filters: (192, 320), initialStrides: (1, 1),
-            blockCount: 1)
-
+        
         finalConv = Conv2D<Float>(
-            filterShape: (1, 1, roundFilterCountDown(filter: 320), 136),
+            filterShape: (1, 1, roundFilterCountDown(filter: 136), 136),
             strides: (1, 1),
             padding: .same)
     }
@@ -204,7 +198,7 @@ public struct EfficientNet: Layer {
     public func callAsFunction(_ input: Tensor<Float>) -> Tensor<Float> {
         let convolved = input.sequenced(through: inputConv, initialMBConv)
         let backbone = convolved.sequenced(through: residualBlockStack1, residualBlockStack2,
-            residualBlockStack3, residualBlockStack4, residualBlockStack5, residualBlockStack6)
+            residualBlockStack3, residualBlockStack5)
         return backbone.sequenced(through: finalConv, avgPool)
     }
 }

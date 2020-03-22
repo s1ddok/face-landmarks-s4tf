@@ -77,10 +77,8 @@ for epoch in 0..<epochs {
         let (loss, 𝛁model) = valueWithGradient(at: model) { model -> Tensorf in
             let predictedLandmarks = model(images)
             
-            let loss = wingLoss(predicted: predictedLandmarks,
-                                expected: landmarks,
-                                w: 1.0 / 26.0,
-                                eps: 0.008)
+            let loss = wingLoss(predicted: predictedLandmarks * 260,
+                                expected: landmarks * 260)
             
             return loss
         }

@@ -76,7 +76,7 @@ for epoch in 0..<epochs {
             let loss = wingLoss(predicted: predictedLandmarks,
                                 expected: landmarks,
                                 w: 1.0 / 26.0,
-                                eps: 0.0001)
+                                eps: 0.001)
             
             return loss
         }

@@ -136,4 +136,8 @@ for testBatch in trainDataset.dataset.batched(1) {
                           groundTruth: gtLandmarks[0] * 260,
                           url: resultsFolder.url.appendingPathComponent("\(testStep).jpg"))
     testStep += 1
+    
+    if testStep == 100 {
+        break
+    }
 }

@@ -124,6 +124,7 @@ for epoch in 0..<epochs {
 }
 
 // MARK: Final test
+Context.local.learningPhase = .inference
 
 let resultsFolder = try Folder.current.createSubfolderIfNeeded(at: "results")
 

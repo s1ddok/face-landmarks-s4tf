@@ -15,7 +15,7 @@ print("Starting with run id: \(runId)")
 let datasetFolder = try Folder(path: options.datasetPath)
 
 let trainDataset = try LabeledImages(folder: datasetFolder, imageSize: (260, 260))
-let validationDataset = trainDataset.dataset.shuffled(sampleCount: 128, randomSeed: 0)
+let validationDataset = trainDataset.dataset
 
 var model = EfficientNet(width: 1.1, depth: 1.2, resolution: 260, dropout: 0.3)
 let optimizer = Adam(for: model, learningRate: 0.0005)
@@ -107,6 +107,8 @@ for epoch in 0..<epochs {
                 
                 totalMetric += nme
                 totalCount += 1
+                
+                if totalCount == 64 { break }
             }
             
             let metric = totalMetric / totalCount

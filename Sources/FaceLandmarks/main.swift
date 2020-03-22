@@ -58,6 +58,10 @@ public func saveResultImageWithGT(image: Tensor<Float>, landmarks: Tensor<Float>
 }
 
 for epoch in 0..<epochs {
+    if epoch == 1 {
+        optimizer.learningRate = 0.0001
+    }
+    
     print("Epoch \(epoch) started at: \(Date())")
 
     let trainingAShuffled = trainDataset.dataset
@@ -76,7 +80,7 @@ for epoch in 0..<epochs {
             let loss = wingLoss(predicted: predictedLandmarks,
                                 expected: landmarks,
                                 w: 1.0 / 26.0,
-                                eps: 0.001)
+                                eps: 0.008)
             
             return loss
         }

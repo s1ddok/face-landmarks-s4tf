@@ -108,7 +108,7 @@ for epoch in 0..<epochs {
             
             let metric = totalMetric / totalCount
             print("Metric: \(metric.scalar!), step: \(step)")
-            writer.addScalar(tag: "metric", scalar: metric.scalar!)
+            writer.addScalar(tag: "metric", scalar: metric.scalar!, globalStep: step)
         }
         
         writer.flush()

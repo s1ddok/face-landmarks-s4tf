@@ -15,6 +15,7 @@ print("Starting with run id: \(runId)")
 let datasetFolder = try Folder(path: options.datasetPath)
 
 let trainDataset = try LabeledImages(folder: datasetFolder, imageSize: (260, 260))
+let validationDataset = trainDataset.dataset.shuffled(sampleCount: 128, randomSeed: 0)
 
 var model = EfficientNet(width: 1.1, depth: 1.2, resolution: 260, dropout: 0.3)
 let optimizer = Adam(for: model, learningRate: 0.0005)
@@ -58,13 +59,14 @@ public func saveResultImageWithGT(image: Tensor<Float>, landmarks: Tensor<Float>
 
 for epoch in 0..<epochs {
     print("Epoch \(epoch) started at: \(Date())")
-    Context.local.learningPhase = .training
 
     let trainingAShuffled = trainDataset.dataset
                                         .shuffled(sampleCount: trainDataset.count,
                                                   randomSeed: Int64(epoch))
 
     for batch in trainingAShuffled.batched(batchSize) {
+        Context.local.learningPhase = .training
+        
         let images = batch.image
         let landmarks = batch.landmarks
         
@@ -82,18 +84,35 @@ for epoch in 0..<epochs {
                          scalar: loss.scalars[0],
                          globalStep: step)
         
-        writer.flush()
-        
-        step += 1
-        
         if step % options.sampleLogPeriod == 0 {
+            Context.local.learningPhase = .inference
+            
             let predictedLandmarks = model(sampleImage)[0]
             
             saveResultImageWithGT(image: sampleImage[0] * 0.5 + 0.5,
                                   landmarks: predictedLandmarks * 260,
                                   groundTruth: sampleLandmarks * 260,
                                   url: Folder.current.url.appendingPathComponent("intermediate\(step).jpg"))
+            
+            var totalMetric = Tensorf.zero
+            var totalCount = Float.zero
+            for batch in validationDataset.batched(1) {
+                let predicted = model(batch.image)[0]
+                let gt = batch.landmarks[0]
+                
+                let nme = normalizedMeanError(predicted: predicted, expected: gt)
+                
+                totalMetric += nme
+                totalCount += 1
+            }
+            
+            let metric = totalMetric / totalCount
+            print("Metric: \(metric.scalar!), step: \(step)")
+            writer.addScalar(tag: "metric", scalar: metric.scalar!)
         }
+        
+        writer.flush()
+        step += 1
     }
 }
 

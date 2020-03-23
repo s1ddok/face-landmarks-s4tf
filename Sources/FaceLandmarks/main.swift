@@ -18,7 +18,7 @@ let datasetFolder = try Folder(path: options.datasetPath)
 let trainDataset = try LabeledImages(folder: datasetFolder.subfolder(named: "train"), imageSize: (imageSize, imageSize))
 let validationDataset = try LabeledImages(folder: datasetFolder.subfolder(named: "val"), imageSize: (imageSize, imageSize))
 
-var model = EfficientNet(width: 1.1, depth: 1.2, resolution: imageSize, dropout: 0.3)
+var model = EfficientNet(width: 1.1, depth: 1.0, resolution: imageSize, dropout: 0.3)
 let optimizer = Adam(for: model, learningRate: 0.0005)
 
 let epochs = options.epochs

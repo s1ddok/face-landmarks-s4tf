@@ -24,9 +24,6 @@ let optimizer = Adam(for: model, learningRate: 0.0005)
 
 let epochs = options.epochs
 let batchSize = options.batchSize
-let gpuIndex = options.gpuIndex
-
-var step = 0
 
 var sampleImage: Tensorf = .zero
 var sampleLandmarks: Tensorf = .zero
@@ -58,6 +55,8 @@ public func saveResultImageWithGT(image: Tensor<Float>, landmarks: Tensor<Float>
     plt.savefig(url.path, bbox_inches: "tight", pad_inches: 0, dpi: dpi)
     plt.close(figure)
 }
+
+var step = 0
 
 for epoch in 0..<epochs {
     if epoch == 1 {

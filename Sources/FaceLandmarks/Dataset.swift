@@ -15,7 +15,9 @@ public class LabeledImages {
         let imageFiles = folder.files(extensions: ["jpg"])
 
         var imageArray: [Float] = []
+        imageArray.reserveCapacity(imageSize.0 * imageSize.1 * 3 * imageFiles.count)
         var landmarksArray: [Float] = []
+        landmarksArray.reserveCapacity(68 * 2 * imageFiles.count)
 
         var elements = 0
         

@@ -12,12 +12,14 @@ let writer = SummaryWriter(logdir: writerURL)
 
 print("Starting with run id: \(runId)")
 
+let imageSize = 260
+
 let datasetFolder = try Folder(path: options.datasetPath)
 
-let trainDataset = try LabeledImages(folder: datasetFolder, imageSize: (260, 260))
+let trainDataset = try LabeledImages(folder: datasetFolder, imageSize: (imageSize, imageSize))
 let validationDataset = trainDataset.dataset
 
-var model = EfficientNet(width: 1.1, depth: 1.2, resolution: 260, dropout: 0.3)
+var model = EfficientNet(width: 1.1, depth: 1.2, resolution: imageSize, dropout: 0.3)
 let optimizer = Adam(for: model, learningRate: 0.0005)
 
 let epochs = options.epochs
@@ -77,8 +79,8 @@ for epoch in 0..<epochs {
         let (loss, 𝛁model) = valueWithGradient(at: model) { model -> Tensorf in
             let predictedLandmarks = model(images)
             
-            let loss = wingLoss(predicted: predictedLandmarks * 260,
-                                expected: landmarks * 260)
+            let loss = wingLoss(predicted: predictedLandmarks * Float(imageSize),
+                                expected: landmarks * Float(imageSize))
             
             return loss
         }
@@ -95,8 +97,8 @@ for epoch in 0..<epochs {
             let predictedLandmarks = model(sampleImage)[0]
             
             saveResultImageWithGT(image: sampleImage[0] * 0.5 + 0.5,
-                                  landmarks: predictedLandmarks * 260,
-                                  groundTruth: sampleLandmarks * 260,
+                                  landmarks: predictedLandmarks * Float(imageSize),
+                                  groundTruth: sampleLandmarks * Float(imageSize),
                                   url: Folder.current.url.appendingPathComponent("intermediate\(step).jpg"))
             
             var totalMetric = Tensorf.zero
@@ -135,8 +137,8 @@ for testBatch in trainDataset.dataset.batched(1) {
     let predictedLandmarks = model(images)
 
     saveResultImageWithGT(image: images[0] * 0.5 + 0.5,
-                          landmarks: predictedLandmarks[0] * 260,
-                          groundTruth: gtLandmarks[0] * 260,
+                          landmarks: predictedLandmarks[0] * Float(imageSize),
+                          groundTruth: gtLandmarks[0] * Float(imageSize),
                           url: resultsFolder.url.appendingPathComponent("\(testStep).jpg"))
     testStep += 1
     

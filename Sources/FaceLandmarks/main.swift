@@ -36,7 +36,7 @@ for batch in trainDataset.dataset.batched(1) {
 var step = 0
 
 for epoch in 0..<epochs {
-    if epoch == 20 {
+    if epoch == 10 {
         optimizer.learningRate = 0.0001
     }
     

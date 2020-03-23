@@ -22,7 +22,7 @@ public class LabeledImages {
         let decoder = JSONDecoder()
 
         for imageFile in imageFiles {
-            let imageTensor = Image(jpeg: imageFile.url).resized(to: imageSize).tensor
+            let imageTensor = Image(jpeg: imageFile.url).resized(to: imageSize).tensor / 127.5 - 1.0
 
             imageArray.append(contentsOf: imageTensor.scalars)
             
@@ -35,7 +35,7 @@ public class LabeledImages {
             elements += 1
         }
 
-        let source = Tensorf(shape: [elements, imageSize.0, imageSize.1, 3], scalars: imageArray) / 127.5 - 1.0
+        let source = Tensorf(shape: [elements, imageSize.0, imageSize.1, 3], scalars: imageArray)
         let landmarks = Tensorf(shape: [elements, 68 * 2], scalars: landmarksArray)
         self.dataset = .init(elements: Elements(image: source, landmarks: landmarks))
         

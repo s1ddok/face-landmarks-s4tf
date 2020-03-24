@@ -13,34 +13,37 @@ public class LabeledImages {
 
     public init(folder: Folder, imageSize: (Int, Int)) throws {
         let imageFiles = folder.files(extensions: ["jpg"])
-
-        var imageArray: [Float] = []
-        imageArray.reserveCapacity(imageSize.0 * imageSize.1 * 3 * imageFiles.count)
+        
         var landmarksArray: [Float] = []
         landmarksArray.reserveCapacity(68 * 2 * imageFiles.count)
-
-        var elements = 0
         
-        let decoder = JSONDecoder()
-
-        for imageFile in imageFiles {
-            let imageTensor = Image(jpeg: imageFile.url).resized(to: imageSize).tensor / 127.5 - 1.0
-
-            imageArray.append(contentsOf: imageTensor.scalars)
+        let tensorHandle = TensorHandle<Float>(shape: [imageFiles.count, imageSize.0, imageSize.1, 3]) { pointer in
+            let decoder = JSONDecoder()
+            let floatsPerImage = imageSize.0 * imageSize.1 * 3
             
-            let landmarksPath = imageFile.url.path.replacingOccurrences(of: ".jpg", with: "_pts.landmarks")
-            let landmarksData = try Data(contentsOf: URL(fileURLWithPath: landmarksPath))
-            let landmarks = try decoder.decode(Tensorf.self, from: landmarksData)
+            var elements = 0
             
-            landmarksArray.append(contentsOf: landmarks.scalars)
+            for imageFile in imageFiles {
+                let imageTensor = Image(jpeg: imageFile.url).resized(to: imageSize).tensor / 127.5 - 1.0
 
-            elements += 1
+                var imageScalars = imageTensor.scalars
+                memcpy(pointer.advanced(by: floatsPerImage * elements), &imageScalars, floatsPerImage * 4)
+                
+                let landmarksPath = imageFile.url.path.replacingOccurrences(of: ".jpg", with: "_pts.landmarks")
+                let landmarksData = try! Data(contentsOf: URL(fileURLWithPath: landmarksPath))
+                let landmarks = try! decoder.decode(Tensorf.self, from: landmarksData)
+                
+                landmarksArray.append(contentsOf: landmarks.scalars)
+                
+                elements += 1
+            }
         }
 
-        let source = Tensorf(shape: [elements, imageSize.0, imageSize.1, 3], scalars: imageArray)
-        let landmarks = Tensorf(shape: [elements, 68 * 2], scalars: landmarksArray)
+        let source = Tensorf(handle: tensorHandle)
+        let landmarks = Tensorf(shape: [imageFiles.count, 68 * 2],
+                                scalars: landmarksArray)
         self.dataset = .init(elements: Elements(image: source, landmarks: landmarks))
         
-        self.count = elements
+        self.count = imageFiles.count
     }
 }

@@ -18,7 +18,7 @@ let datasetFolder = try Folder(path: options.datasetPath)
 let trainDataset = try LabeledImages(folder: datasetFolder.subfolder(named: "train"), imageSize: (imageSize, imageSize))
 let validationDataset = try LabeledImages(folder: datasetFolder.subfolder(named: "val"), imageSize: (imageSize, imageSize))
 
-var model = EfficientNet(width: 1.1, depth: 1.0, resolution: imageSize, dropout: 0.3)
+var model = EfficientNet(width: 1.1, depth: 1.2, resolution: imageSize, dropout: 0.3)
 let optimizer = Adam(for: model, learningRate: 0.0002)
 
 let epochs = options.epochs
@@ -36,15 +36,15 @@ for batch in trainDataset.dataset.batched(1) {
 var step = 0
 
 for epoch in 0..<epochs {
-    if epoch == 10 {
+    if epoch == 5 {
         optimizer.learningRate = 0.00005
     }
     
     print("Epoch \(epoch) started at: \(Date())")
 
     let trainingAShuffled = trainDataset.dataset
-                                        /*.shuffled(sampleCount: trainDataset.count,
-                                                  randomSeed: Int64(epoch))*/
+                                        .shuffled(sampleCount: 1024,
+                                                  randomSeed: Int64(epoch))
 
     for batch in trainingAShuffled.batched(batchSize) {
         Context.local.learningPhase = .training
